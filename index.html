@@ -16,6 +16,7 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
 .lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);margin-bottom:8px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px}
 .fb{border:1.5px solid var(--bd);background:var(--s1);color:var(--mu);border-radius:var(--rs);padding:13px 14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .15s;-webkit-tap-highlight-color:transparent;text-align:left;width:100%}
+.ct{font-size:12px;color:var(--mu);font-weight:500;margin-left:auto}
 .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--fc)}
 .fb[data-f="PwC"]{--fc:#e05c30}
 .fb[data-f="Deloitte"]{--fc:#26e07d}
@@ -125,6 +126,7 @@ for(const r of D){
   if(t){const u=t.toUpperCase();(t2f[u]=t2f[u]||new Set()).add(f);}
 }
 {const yrs=D.map(r=>+r[3].split('/')[2]).filter(Boolean);if(yrs.length){const mn=Math.min(...yrs),mx=Math.max(...yrs);document.getElementById('yr').textContent=mn===mx?mn:mn+'\u2013'+mx;}}
+document.querySelectorAll('.fb').forEach(b=>{const f=b.dataset.f,c=document.createElement('span');c.className='ct';c.textContent=((byF[f]||[]).length).toLocaleString();b.appendChild(c);});
 function pick(b){
   const f=b.dataset.f;
   document.querySelectorAll('.fb').forEach(x=>{x.classList.remove('on');x.setAttribute('aria-pressed','false');});
@@ -169,7 +171,8 @@ function doChips(){
 }
 function clrPort(){port=[];document.getElementById('pfsec').style.display='none';document.getElementById('chips').innerHTML='';}
 function onFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=v=>setPort(parse(v.target.result));r.readAsText(f);e.target.value='';}
-function parse(s){s=s.replace(/^\uFEFF/,'');s=s.replace(/"/g,'');const out=[];for(const l of s.trim().split(/[\n\r]+/))for(const p of l.split(/[,;\t ]+/)){const c=p.replace(/[^A-Za-z0-9.\-]/g,'').toUpperCase();if(c.length>=1&&/^[A-Z]/.test(c))out.push(c);}return out;}
+const HDR=new Set(['SYMBOL','TICKER','SECURITY','SECURITYDESCRIPTION','DESCRIPTION','QUANTITY','CUSIP','ACCOUNT','TOTAL','CASH']);
+function parse(s){s=s.replace(/^\uFEFF/,'');s=s.replace(/"/g,'');const out=[];for(const l of s.trim().split(/[\n\r]+/))for(const p of l.split(/[,;\t ]+/)){const c=p.replace(/[^A-Za-z0-9.\-]/g,'').toUpperCase();if(HDR.has(c))continue;if(c.length>=1&&/^[A-Z]/.test(c))out.push(c);}return out;}
 function openM(){document.getElementById('mo').classList.add('open');setTimeout(()=>document.getElementById('pa').focus(),80);}
 function closeM(){document.getElementById('mo').classList.remove('open');}
 function moOut(e){if(e.target===document.getElementById('mo'))closeM();}
