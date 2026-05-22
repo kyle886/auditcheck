@@ -98,7 +98,7 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
     </div>
     <div id="lc"></div>
     <div class="dn">
-      Source: <a href="https://pcaobus.org/resources/auditorsearch" target="_blank">PCAOB AuditorSearch</a> &middot; Form AP filings 2022&ndash;2026<br>
+      Source: <a href="https://pcaobus.org/resources/auditorsearch" target="_blank">PCAOB AuditorSearch</a> &middot; Form AP filings <span id="yr">2022&ndash;2026</span><br>
       US registered public companies only. Always verify against your firm's internal restricted list.
     </div>
   </div>
@@ -123,6 +123,7 @@ for(const r of D){
   (byF[f]=byF[f]||[]).push(r);
   if(t){const u=t.toUpperCase();(t2f[u]=t2f[u]||new Set()).add(f);}
 }
+{const yrs=D.map(r=>+r[3].split('/')[2]).filter(Boolean);if(yrs.length){const mn=Math.min(...yrs),mx=Math.max(...yrs);document.getElementById('yr').textContent=mn===mx?mn:mn+'\u2013'+mx;}}
 function pick(b){
   const f=b.dataset.f;
   document.querySelectorAll('.fb').forEach(x=>x.classList.remove('on'));
