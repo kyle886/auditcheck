@@ -167,7 +167,7 @@ function doChips(){
 }
 function clrPort(){port=[];document.getElementById('pfsec').style.display='none';document.getElementById('chips').innerHTML='';}
 function onFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=v=>setPort(parse(v.target.result));r.readAsText(f);e.target.value='';}
-function parse(s){s=s.replace(/^\uFEFF/,'');s=s.replace(/"([^"]*)"/g,'$1');const out=[];for(const l of s.trim().split(/[\n\r]+/))for(const p of l.split(/[,;\t ]+/)){const c=p.replace(/[^A-Za-z0-9.\-]/g,'').toUpperCase();if(c.length>=1&&/^[A-Z]/.test(c))out.push(c);}return out;}
+function parse(s){s=s.replace(/^\uFEFF/,'');s=s.replace(/"/g,'');const out=[];for(const l of s.trim().split(/[\n\r]+/))for(const p of l.split(/[,;\t ]+/)){const c=p.replace(/[^A-Za-z0-9.\-]/g,'').toUpperCase();if(c.length>=1&&/^[A-Z]/.test(c))out.push(c);}return out;}
 function openM(){document.getElementById('mo').classList.add('open');setTimeout(()=>document.getElementById('pa').focus(),80);}
 function closeM(){document.getElementById('mo').classList.remove('open');}
 function moOut(e){if(e.target===document.getElementById('mo'))closeM();}
