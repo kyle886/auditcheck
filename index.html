@@ -124,7 +124,7 @@ for(const r of D){
   (byF[f]=byF[f]||[]).push(r);
   if(t){const u=t.toUpperCase();(t2f[u]=t2f[u]||new Set()).add(f);}
 }
-document.querySelectorAll('.fb').forEach(b=>{const f=b.dataset.f;b.innerHTML=`<span class="dot"></span>${f}<span class="ct">&middot; ${(byF[f]||[]).length.toLocaleString()}</span>`;});
+document.querySelectorAll('.fb').forEach(b=>{const f=b.dataset.f,c=document.createElement('span');c.className='ct';c.textContent='· '+((byF[f]||[]).length).toLocaleString();b.appendChild(c);});
 function pick(b){
   const f=b.dataset.f;
   document.querySelectorAll('.fb').forEach(x=>x.classList.remove('on'));
