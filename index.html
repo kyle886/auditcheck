@@ -167,11 +167,12 @@ function doChips(){
     if(bad)bads++;
     return'<span class="chip '+(bad?'bad':'ok')+'">'+( bad?'&#x26A0;':'&#x2713;')+'&nbsp;'+t+'</span>';
   }).join('');
+  if(!sf){sum.style.display='none';sum.textContent='';return;}
   sum.style.display='block';
   sum.style.color=bads?'var(--red)':'var(--grn)';
   sum.innerHTML=(bads?'&#x26A0; ':'&#x2713; ')+bads+' of '+port.length+' tickers restricted by '+sf;
 }
-function clrPort(){port=[];document.getElementById('pfsec').style.display='none';document.getElementById('chips').innerHTML='';document.getElementById('psum').style.display='none';document.getElementById('psum').textContent='';}
+function clrPort(){const sum=document.getElementById('psum');port=[];document.getElementById('pfsec').style.display='none';document.getElementById('chips').innerHTML='';sum.style.display='none';sum.textContent='';}
 function onFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=v=>setPort(parse(v.target.result));r.readAsText(f);e.target.value='';}
 function parse(s){const out=[];for(const l of s.trim().split(/[\n\r]+/))for(const p of l.split(/[,;\t ]+/)){const c=p.replace(/[^A-Za-z0-9.\-]/g,'').toUpperCase();if(c.length>=1&&/^[A-Z]/.test(c))out.push(c);}return out;}
 function openM(){document.getElementById('mo').classList.add('open');setTimeout(()=>document.getElementById('pa').focus(),80);}
