@@ -4,9 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-AuditCheck is a single-file static PWA that lets Big-Four (PwC, Deloitte, EY, KPMG) employees check whether tickers in their personal portfolio appear on their firm's audit-restricted issuer list. Data is sourced from PCAOB AuditorSearch Form AP filings 2022–2026 (US registered public companies only).
+AuditCheck is a single-file static PWA that helps Big-Four (PwC, Deloitte, EY, KPMG) personnel quickly check whether a stock they're thinking about buying is one their firm audits — i.e. an issuer that would land on the firm's personal-independence restricted list. The user picks their firm, then either searches a single ticker / company name or pastes / uploads a portfolio; tickers that match an issuer audited by the selected firm are flagged.
 
 There is no framework, no build step, no test suite, no linter, and no package manager. The entire app — HTML, CSS, JS, and the full PCAOB dataset (~11k rows) — lives inline in `index.html`. Deployment is a static upload to Vercel (`vercel.json`).
+
+## Regulatory context (why this app exists)
+
+Auditor independence is governed by overlapping rule sets:
+
+- **SEC Regulation S-X, Rule 2-01** — prohibits an accounting firm and its "covered persons" from holding a direct or material indirect financial interest in an audit client. Rule 2-01(f)(11) defines covered persons and Rule 2-01(c)(1) requires firms to maintain automated systems that flag impermissible investments by partners and managerial employees.
+- **AICPA Code of Professional Conduct** — applies the "covered member" concept; independence is impaired if a covered member, their spouse / spousal equivalent, or a dependent holds a direct financial interest in an attest client.
+- **PCAOB Rule 3211** — requires every PCAOB-registered firm to file a **Form AP** for each issuer audit report, naming the engagement partner and other participating firms. These filings are aggregated in the public **PCAOB AuditorSearch** database — the source of this app's dataset.
+
+What this means for users in practice:
+
+- Each Big-Four firm publishes an internal **restricted entity list** (often surfaced through systems like Deloitte's GIMS or EY's GMS). Covered personnel must check it **before** any trade in their own or an immediate family member's account. The firm's internal list — not this app — is the authoritative source.
+- Restrictions extend to **immediate family** (spouse / spousal equivalent / dependents) and to **indirect interests** (e.g. holding shares of an audit client through a self-directed brokerage account). Passive, broad-market ETFs and mutual funds where the employee doesn't pick the holdings are generally *not* restricted, even if they include an audit client.
+- Scope of who is "covered" varies by role (partners and managers vs. staff, client-facing vs. not) and by which member firm employs them. This app does not model role-based scope — it treats every issuer audited by the selected firm as potentially restricted.
+
+### Limits of the PCAOB-derived dataset
+
+Future agents should not over-promise what this tool can do:
+
+1. **Public proxy, not the firm's list.** The dataset is built from Form AP filings, which cover SEC-registered issuer audits only. It will miss private-company audits, non-issuer assurance work, affiliate / portfolio-company restrictions, prospective clients, and any internal additions a firm makes to its own restricted list.
+2. **PCAOB AuditorSearch's bulk download does not include the ticker field** — tickers in the inlined `D` array were joined in from another source. Many rows still have an empty ticker (funds and other issuers with no listed common stock); those rows render with an em-dash and won't match anything from a pasted portfolio.
+3. **No "covered person" scoping, no family-account handling, no indirect-interest analysis.** The app is a fast lookup, not a compliance system. Any user-facing wording (in `index.html` or future docs) should keep the disclaimer that users must still confirm against their firm's internal restricted list — the existing footer already says this and shouldn't be weakened.
 
 ## Running locally
 
