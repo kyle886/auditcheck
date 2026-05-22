@@ -60,6 +60,7 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
 .dn{text-align:center;font-size:11px;color:#3a3a3a;margin-top:28px;line-height:1.7}
 .dn a{color:#4a4a4a;text-decoration:none}
 .cbtn{background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 </style>
 </head>
 <body>
@@ -162,7 +163,7 @@ function doChips(){
   el.innerHTML=port.map(t=>{
     const base=t.split('.')[0];
     const bad=sf&&(t2f[base]||new Set()).has(sf);
-    return'<span class="chip '+(bad?'bad':'ok')+'">'+( bad?'&#x26A0;':'&#x2713;')+'&nbsp;'+t+'</span>';
+    return'<span class="chip '+(bad?'bad':'ok')+'">'+( bad?'&#x26A0;':'&#x2713;')+'&nbsp;'+t+'<span class="sr"> '+(bad?'restricted':'permitted')+'</span></span>';
   }).join('');
 }
 function clrPort(){port=[];document.getElementById('pfsec').style.display='none';document.getElementById('chips').innerHTML='';}
