@@ -68,10 +68,10 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
   <p class="sub">Know which stocks your firm audits before you trade.</p>
   <div class="lbl">I work at</div>
   <div class="grid">
-    <button class="fb" data-f="PwC" onclick="pick(this)"><span class="dot"></span>PwC</button>
-    <button class="fb" data-f="Deloitte" onclick="pick(this)"><span class="dot"></span>Deloitte</button>
-    <button class="fb" data-f="EY" onclick="pick(this)"><span class="dot"></span>EY</button>
-    <button class="fb" data-f="KPMG" onclick="pick(this)"><span class="dot"></span>KPMG</button>
+    <button class="fb" data-f="PwC" aria-pressed="false" onclick="pick(this)"><span class="dot"></span>PwC</button>
+    <button class="fb" data-f="Deloitte" aria-pressed="false" onclick="pick(this)"><span class="dot"></span>Deloitte</button>
+    <button class="fb" data-f="EY" aria-pressed="false" onclick="pick(this)"><span class="dot"></span>EY</button>
+    <button class="fb" data-f="KPMG" aria-pressed="false" onclick="pick(this)"><span class="dot"></span>KPMG</button>
   </div>
   <div id="main" style="display:none">
     <div class="lbl">Check a stock</div>
@@ -125,9 +125,9 @@ for(const r of D){
 }
 function pick(b){
   const f=b.dataset.f;
-  document.querySelectorAll('.fb').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.fb').forEach(x=>{x.classList.remove('on');x.setAttribute('aria-pressed','false');});
   if(sf===f){sf=null;document.getElementById('main').style.display='none';return;}
-  sf=f;b.classList.add('on');
+  sf=f;b.classList.add('on');b.setAttribute('aria-pressed','true');
   document.getElementById('main').style.display='block';
   render();doChips();
 }
