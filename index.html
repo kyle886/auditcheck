@@ -160,7 +160,7 @@ function doChips(){
   const el=document.getElementById('chips');
   if(!port.length)return;
   el.innerHTML=port.map(t=>{
-    const base=t.split(/[.\-]/)[0],alt=t.replace('-','.');
+    const base=t.split(/[.\-]/)[0],alt=t.replace(/-/g,'.');
     const bad=sf&&((t2f[t]||new Set()).has(sf)||(t2f[alt]||new Set()).has(sf)||(t2f[base]||new Set()).has(sf));
     return'<span class="chip '+(bad?'bad':'ok')+'">'+( bad?'&#x26A0;':'&#x2713;')+'&nbsp;'+t+'</span>';
   }).join('');
