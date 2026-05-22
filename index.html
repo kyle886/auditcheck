@@ -119,9 +119,19 @@ const D=[["Deloitte","FT 9872","","1/4/2022"],["Deloitte","FT 9820","","1/5/2022
 let sf=null,sq="",port=[];
 const byF={},t2f={};
 for(const r of D){
-  const[f,,t]=r;
+  const[f,,t,d]=r,y=+(d&&d.split('/')[2]||0);
+  r.yMin=r.yMax=y;
   (byF[f]=byF[f]||[]).push(r);
   if(t){const u=t.toUpperCase();(t2f[u]=t2f[u]||new Set()).add(f);}
+}
+for(const f in byF){
+  const out=[],seen=new Map();
+  for(const r of byF[f]){
+    const k=r[1]+'\0'+r[2],x=seen.get(k);
+    if(x){if(r.yMin<x.yMin)x.yMin=r.yMin;if(r.yMax>x.yMax)x.yMax=r.yMax;continue;}
+    seen.set(k,r);out.push(r);
+  }
+  byF[f]=out;
 }
 function pick(b){
   const f=b.dataset.f;
@@ -143,9 +153,10 @@ function render(){
   const fil=sq?data.filter(([,n,t])=>(t&&t.toLowerCase().startsWith(sq))||n.toLowerCase().includes(sq)):data;
   rc.textContent=fil.length.toLocaleString()+' issuers';
   if(!fil.length){lc.innerHTML='<div style="text-align:center;padding:50px 20px;color:#666"><div style="font-size:32px;margin-bottom:10px">&#x1F50D;</div><p>No matches</p></div>';return;}
-  const rows=fil.slice(0,300).map(([,n,t,d])=>{
+  const rows=fil.slice(0,300).map(r=>{
+    const[,n,t]=r;
     const tkEl=t?'<span class="tk">'+t+'</span>':'<span class="tk nt">&mdash;</span>';
-    const yr=d?(d.split('/')[2]||''):'';
+    const yr=r.yMin?(r.yMin===r.yMax?''+r.yMin:r.yMin+'–'+r.yMax):'';
     return'<div class="it">'+tkEl+'<span class="nm" title="'+n+'">'+n+'</span><span class="dt">'+yr+'</span></div>';
   }).join('');
   const more=fil.length>300?'<p style="text-align:center;color:#3a3a3a;font-size:12px;margin-top:10px">+'+(fil.length-300)+' more — refine search</p>':''
