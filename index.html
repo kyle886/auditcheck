@@ -16,6 +16,7 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
 .lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);margin-bottom:8px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px}
 .fb{border:1.5px solid var(--bd);background:var(--s1);color:var(--mu);border-radius:var(--rs);padding:13px 14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .15s;-webkit-tap-highlight-color:transparent;text-align:left;width:100%}
+.ct{font-size:12px;color:var(--mu);font-weight:500}
 .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--fc)}
 .fb[data-f="PwC"]{--fc:#e05c30}
 .fb[data-f="Deloitte"]{--fc:#26e07d}
@@ -123,6 +124,7 @@ for(const r of D){
   (byF[f]=byF[f]||[]).push(r);
   if(t){const u=t.toUpperCase();(t2f[u]=t2f[u]||new Set()).add(f);}
 }
+document.querySelectorAll('.fb').forEach(b=>{const f=b.dataset.f;b.innerHTML=`<span class="dot"></span>${f}<span class="ct">&middot; ${(byF[f]||[]).length.toLocaleString()}</span>`;});
 function pick(b){
   const f=b.dataset.f;
   document.querySelectorAll('.fb').forEach(x=>x.classList.remove('on'));
