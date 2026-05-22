@@ -92,6 +92,7 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
         <div class="lbl" style="margin:0">Portfolio</div>
         <button class="cbtn" onclick="clrPort()">Clear all</button>
       </div>
+      <div id="psum" style="display:none;font-size:12px;font-weight:600;margin:0 0 10px"></div>
       <div class="chips" id="chips"></div>
     </div>
     <div class="rh">
@@ -128,6 +129,15 @@ for(const r of D){
   if(t){const u=t.toUpperCase();(t2f[u]=t2f[u]||new Set()).add(f);}
   r[4]=stripSuffixes(r[1].toLowerCase());
 }
+for(const f in byF){
+  const seen=new Map(),out=[];
+  for(const r of byF[f]){
+    const y=+r[3].split('/')[2]||0,k=r[1]+'\x00'+r[2],x=seen.get(k);
+    if(x){if(y&&y<x.yMin)x.yMin=y;if(y&&y>x.yMax)x.yMax=y;continue;}
+    r.yMin=y;r.yMax=y;seen.set(k,r);out.push(r);
+  }
+  byF[f]=out;
+}
 {const yrs=D.map(r=>+r[3].split('/')[2]).filter(Boolean);if(yrs.length){const mn=Math.min(...yrs),mx=Math.max(...yrs);document.getElementById('yr').textContent=mn===mx?mn:mn+'\u2013'+mx;}}
 document.querySelectorAll('.fb').forEach(b=>{const f=b.dataset.f,c=document.createElement('span');c.className='ct';c.textContent=((byF[f]||[]).length).toLocaleString();b.appendChild(c);});
 function pick(b){
@@ -150,9 +160,10 @@ function render(){
   const fil=sq?data.filter(([,n,t,,sn])=>(t&&t.toLowerCase().startsWith(sq))||sn.includes(sq)):data;
   rc.textContent=fil.length.toLocaleString()+' issuers';
   if(!fil.length){lc.innerHTML='<div style="text-align:center;padding:50px 20px;color:#666"><div style="font-size:32px;margin-bottom:10px">&#x1F50D;</div><p>No matches</p></div>';return;}
-  const rows=fil.slice(0,300).map(([,n,t,d])=>{
+  const rows=fil.slice(0,300).map(r=>{
+    const[,n,t]=r;
     const tkEl=t?'<span class="tk">'+t+'</span>':'<span class="tk nt">&mdash;</span>';
-    const yr=d?(d.split('/')[2]||''):'';
+    const yr=r.yMin?(r.yMin===r.yMax?''+r.yMin:r.yMin+'–'+r.yMax):'';
     return'<div class="it">'+tkEl+'<span class="nm" title="'+n+'">'+n+'</span><span class="dt">'+yr+'</span></div>';
   }).join('');
   const more=fil.length>300?'<p style="text-align:center;color:#3a3a3a;font-size:12px;margin-top:10px">+'+(fil.length-300)+' more — refine search</p>':''
@@ -164,15 +175,21 @@ function setPort(tks){
   document.getElementById('pfsec').style.display=port.length?'block':'none';
 }
 function doChips(){
-  const el=document.getElementById('chips');
-  if(!port.length)return;
+  const el=document.getElementById('chips'),sum=document.getElementById('psum');
+  if(!port.length){sum.style.display='none';sum.textContent='';return;}
+  let bads=0;
   el.innerHTML=port.map(t=>{
-    const base=t.split('.')[0];
-    const bad=sf&&(t2f[base]||new Set()).has(sf);
+    const base=t.split(/[.\-]/)[0],alt=t.replace(/-/g,'.');
+    const bad=sf&&((t2f[t]||new Set()).has(sf)||(t2f[alt]||new Set()).has(sf)||(t2f[base]||new Set()).has(sf));
+    if(bad)bads++;
     return'<span class="chip '+(bad?'bad':'ok')+'">'+( bad?'&#x26A0;':'&#x2713;')+'&nbsp;'+t+'<span class="sr"> '+(bad?'restricted':'permitted')+'</span></span>';
   }).join('');
+  if(!sf){sum.style.display='none';sum.textContent='';return;}
+  sum.style.display='block';
+  sum.style.color=bads?'var(--red)':'var(--grn)';
+  sum.innerHTML=(bads?'&#x26A0; ':'&#x2713; ')+bads+' of '+port.length+' tickers restricted by '+sf;
 }
-function clrPort(){port=[];document.getElementById('pfsec').style.display='none';document.getElementById('chips').innerHTML='';}
+function clrPort(){const sum=document.getElementById('psum');port=[];document.getElementById('pfsec').style.display='none';document.getElementById('chips').innerHTML='';sum.style.display='none';sum.textContent='';}
 function onFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=v=>setPort(parse(v.target.result));r.readAsText(f);e.target.value='';}
 const HDR=new Set(['SYMBOL','TICKER','SECURITY','SECURITYDESCRIPTION','DESCRIPTION','QUANTITY','CUSIP','ACCOUNT','TOTAL','CASH']);
 function parse(s){s=s.replace(/^\uFEFF/,'');s=s.replace(/"/g,'');const out=[];for(const l of s.trim().split(/[\n\r]+/))for(const p of l.split(/[,;\t ]+/)){const c=p.replace(/[^A-Za-z0-9.\-]/g,'').toUpperCase();if(HDR.has(c))continue;if(c.length>=1&&/^[A-Z]/.test(c))out.push(c);}return out;}
