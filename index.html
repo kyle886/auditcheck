@@ -90,6 +90,7 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
         <div class="lbl" style="margin:0">Portfolio</div>
         <button class="cbtn" onclick="clrPort()">Clear all</button>
       </div>
+      <div id="psum" style="display:none;font-size:12px;font-weight:600;margin:0 0 10px"></div>
       <div class="chips" id="chips"></div>
     </div>
     <div class="rh">
@@ -157,15 +158,20 @@ function setPort(tks){
   document.getElementById('pfsec').style.display=port.length?'block':'none';
 }
 function doChips(){
-  const el=document.getElementById('chips');
-  if(!port.length)return;
+  const el=document.getElementById('chips'),sum=document.getElementById('psum');
+  if(!port.length){sum.style.display='none';sum.textContent='';return;}
+  let bads=0;
   el.innerHTML=port.map(t=>{
     const base=t.split('.')[0];
     const bad=sf&&(t2f[base]||new Set()).has(sf);
+    if(bad)bads++;
     return'<span class="chip '+(bad?'bad':'ok')+'">'+( bad?'&#x26A0;':'&#x2713;')+'&nbsp;'+t+'</span>';
   }).join('');
+  sum.style.display='block';
+  sum.style.color=bads?'var(--red)':'var(--grn)';
+  sum.innerHTML=(bads?'&#x26A0; ':'&#x2713; ')+bads+' of '+port.length+' tickers restricted by '+sf;
 }
-function clrPort(){port=[];document.getElementById('pfsec').style.display='none';document.getElementById('chips').innerHTML='';}
+function clrPort(){port=[];document.getElementById('pfsec').style.display='none';document.getElementById('chips').innerHTML='';document.getElementById('psum').style.display='none';document.getElementById('psum').textContent='';}
 function onFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=v=>setPort(parse(v.target.result));r.readAsText(f);e.target.value='';}
 function parse(s){const out=[];for(const l of s.trim().split(/[\n\r]+/))for(const p of l.split(/[,;\t ]+/)){const c=p.replace(/[^A-Za-z0-9.\-]/g,'').toUpperCase();if(c.length>=1&&/^[A-Z]/.test(c))out.push(c);}return out;}
 function openM(){document.getElementById('mo').classList.add('open');setTimeout(()=>document.getElementById('pa').focus(),80);}
