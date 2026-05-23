@@ -62,7 +62,8 @@ export function buildIndex(rows: Row[]): BuiltIndex {
 }
 
 export async function loadData(): Promise<Row[]> {
-  const res = await fetch('/data.json');
-  if (!res.ok) throw new Error('Failed to load /data.json: ' + res.status);
+  const url = import.meta.env.BASE_URL + 'data.json';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to load ' + url + ': ' + res.status);
   return (await res.json()) as Row[];
 }

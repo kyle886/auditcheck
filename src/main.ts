@@ -119,6 +119,9 @@ async function init(): Promise<void> {
 
 init().catch((err) => {
   console.error(err);
-  const lc = document.getElementById('lc');
-  if (lc) lc.textContent = 'Failed to load dataset. Please refresh.';
+  const e = document.getElementById('err');
+  if (e) {
+    e.textContent = 'Failed to load dataset. Please refresh.';
+    e.style.display = 'block';
+  }
 });
