@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>AuditCheck</title>
+</head>
+<body>
+<div class="app">
+  <h1>AuditCheck &#x2713;</h1>
+  <p class="sub">Know which stocks your firm audits before you trade.</p>
+  <div class="lbl">I work at</div>
+  <div class="grid">
+    <button class="fb" data-f="PwC" aria-pressed="false"><span class="dot"></span>PwC</button>
+    <button class="fb" data-f="Deloitte" aria-pressed="false"><span class="dot"></span>Deloitte</button>
+    <button class="fb" data-f="EY" aria-pressed="false"><span class="dot"></span>EY</button>
+    <button class="fb" data-f="KPMG" aria-pressed="false"><span class="dot"></span>KPMG</button>
+  </div>
+  <div id="err" style="display:none;padding:12px 14px;border-radius:8px;background:rgba(255,77,77,.13);color:var(--red);border:1px solid rgba(255,77,77,.3);font-size:13px;margin-bottom:20px"></div>
+  <div id="main" style="display:none">
+    <div class="lbl">Check a stock</div>
+    <div class="sw" id="sw">
+      <input type="text" id="si" placeholder="Ticker or company name...">
+      <span class="ico">&#x2315;</span>
+      <button class="xb" id="xb-clr">&#xD7;</button>
+    </div>
+    <div class="ib">
+      <button id="btn-import">&#x2191; Import CSV</button>
+      <button id="btn-paste">&#x229E; Paste tickers</button>
+      <input type="file" id="fi" accept=".csv,.txt">
+    </div>
+    <div id="pfsec" class="pf" style="display:none">
+      <div class="ph">
+        <div class="lbl" style="margin:0">Portfolio</div>
+        <button class="cbtn" id="btn-clrport">Clear all</button>
+      </div>
+      <div id="psum" style="display:none;font-size:12px;font-weight:600;margin:0 0 10px"></div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="rh">
+      <div class="lbl" style="margin:0">Restricted securities</div>
+      <div class="rc" id="rc"></div>
+    </div>
+    <div id="lc"></div>
+    <div class="dn">
+      Source: <a href="https://pcaobus.org/resources/auditorsearch" target="_blank" rel="noopener">PCAOB AuditorSearch</a> &middot; Form AP filings <span id="yr">2022&ndash;2026</span><br>
+      US registered public companies only. Always verify against your firm's internal restricted list.
+    </div>
+  </div>
+</div>
+<div class="mo" id="mo">
+  <div class="md">
+    <h3>Paste tickers</h3>
+    <p>One per line or comma-separated.<br>e.g. AAPL, MSFT, NVDA</p>
+    <textarea id="pa" placeholder="AAPL&#10;MSFT&#10;NVDA"></textarea>
+    <div class="mbs">
+      <button class="bc" id="btn-mo-cancel">Cancel</button>
+      <button class="bp" id="btn-mo-apply">Check portfolio</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="./main.ts"></script>
+</body>
+</html>

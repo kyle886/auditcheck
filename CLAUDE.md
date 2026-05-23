@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-AuditCheck is a single-file static PWA that helps Big-Four (PwC, Deloitte, EY, KPMG) personnel quickly check whether a stock they're thinking about buying is one their firm audits — i.e. an issuer that would land on the firm's personal-independence restricted list. The user picks their firm, then either searches a single ticker / company name or pastes / uploads a portfolio; tickers that match an issuer audited by the selected firm are flagged.
+AuditCheck is a static PWA that helps Big-Four (PwC, Deloitte, EY, KPMG) personnel quickly check whether a stock they're thinking about buying is one their firm audits — i.e. an issuer that would land on the firm's personal-independence restricted list. The user picks their firm, then either searches a single ticker / company name or pastes / uploads a portfolio; tickers that match an issuer audited by the selected firm are flagged.
 
-There is no framework, no build step, no test suite, no linter, and no package manager. The entire app — HTML, CSS, JS, and the full PCAOB dataset (~11k rows) — lives inline in `index.html`. Deployment is a static upload to Vercel (`vercel.json`).
+The app is built with **Vite + TypeScript** (no framework) and deployed to Vercel. The PCAOB dataset (~11k rows) ships as `public/data.json`, fetched at load. Portfolio data never leaves the browser.
 
 ## Regulatory context (why this app exists)
 
@@ -27,49 +27,74 @@ What this means for users in practice:
 Future agents should not over-promise what this tool can do:
 
 1. **Public proxy, not the firm's list.** The dataset is built from Form AP filings, which cover SEC-registered issuer audits only. It will miss private-company audits, non-issuer assurance work, affiliate / portfolio-company restrictions, prospective clients, and any internal additions a firm makes to its own restricted list.
-2. **PCAOB AuditorSearch's bulk download does not include the ticker field** — tickers in the inlined `D` array were joined in from another source. Many rows still have an empty ticker (funds and other issuers with no listed common stock); those rows render with an em-dash and won't match anything from a pasted portfolio.
-3. **No "covered person" scoping, no family-account handling, no indirect-interest analysis.** The app is a fast lookup, not a compliance system. Any user-facing wording (in `index.html` or future docs) should keep the disclaimer that users must still confirm against their firm's internal restricted list — the existing footer already says this and shouldn't be weakened.
+2. **PCAOB AuditorSearch's bulk download does not include the ticker field** — tickers in `public/data.json` were joined in from another source. Many rows still have an empty ticker (funds and other issuers with no listed common stock); those rows render with an em-dash and won't match anything from a pasted portfolio.
+3. **No "covered person" scoping, no family-account handling, no indirect-interest analysis.** The app is a fast lookup, not a compliance system. Any user-facing wording (in `src/index.html` or future docs) should keep the disclaimer that users must still confirm against their firm's internal restricted list — the existing footer already says this and shouldn't be weakened.
 
 ## Running locally
 
-Open `index.html` in a browser, or serve the directory with any static server (e.g. `python3 -m http.server`). No install step.
+```
+npm install
+npm run dev      # Vite dev server (port 5173)
+npm test         # Vitest unit tests
+npm run build    # Type-check + production build into dist/
+```
 
 ## Architecture
 
-Everything is in `index.html`. The structure top-to-bottom:
+```
+src/
+  index.html        shell only (markup, meta tags, mount point — no inline JS)
+  main.ts           entry — loads data.json, builds indexes, wires events
+  styles.css        all CSS
+  types.ts          Firm, Row, ByFirm, Ticker2Firms
+  parse.ts          parse() — portfolio text → tickers (handles BOM, quotes, headers)
+  data.ts           loadData(), buildIndex(), stripSuffixes(), SUFFIXES
+  results.ts        renderResults() — the main search results list
+  chips.ts          doChips() — portfolio chips + conflict summary
+  modal.ts          openModal() / closeModal()
+public/
+  data.json         the PCAOB row array, fetched at load
+tests/
+  parse.test.ts
+  data.test.ts
+.github/workflows/
+  ci.yml            runs `npm test` + `npm run build` on every PR
+```
 
-1. `<style>` block — terse CSS using short class names (`fb`, `sw`, `mo`, `md`, etc.) and CSS variables (`--bg`, `--s1`, `--bd`, …). Mobile-first, max-width 520px.
-2. `<body>` markup — firm picker, search input, CSV/paste import, portfolio chip list, results list, paste modal.
-3. `<script>` block — the single `const D = [...]` array followed by ~30 lines of vanilla JS (no modules, no framework).
+### The data array
 
-### The data array `D`
+`public/data.json` is a JSON array of rows, each `[firm, issuer_name, ticker, date]`:
+- `firm`: `"PwC" | "Deloitte" | "EY" | "KPMG"`
+- `ticker`: frequently `""` (many issuers are funds / private filers with no listed ticker — these render with an em-dash placeholder and won't match a portfolio paste)
+- `date`: `M/D/YYYY` string; only the year is displayed
 
-Each row is `[firm, issuer_name, ticker, date]` where:
-- `firm` is one of `"PwC" | "Deloitte" | "EY" | "KPMG"`
-- `ticker` is frequently `""` (many issuers are funds / private filers with no listed ticker — these still render but with an em-dash placeholder)
-- `date` is `M/D/YYYY` string; only the year is displayed
+At load, `buildIndex()` in `src/data.ts` produces:
+- `byF[firm]` → deduped rows per firm, each with `yMin` / `yMax` properties for the filing-year range
+- `t2f[TICKER]` → `Set<Firm>` for portfolio conflict marking
+- `yearMin` / `yearMax` for the footer year range
 
-Two derived indexes are built once at load:
-- `byF[firm]` → array of rows for that firm (drives the results list)
-- `t2f[TICKER]` → `Set` of firms that audit the issuer for that ticker (drives portfolio conflict marking)
+Row dedup key: `(firm, name, ticker)`. First-occurrence order is preserved. Each retained row gets `yMin` / `yMax` from the spread of years across its duplicates.
 
-When matching a portfolio ticker against `t2f`, the ticker is normalized by `split('.')[0]` to fold share classes (e.g. `BRK.B` → `BRK`).
+Each row also gets `r[4]` set to a lowercased, suffix-stripped name (Inc, Corp, LLC, etc.) at index time, used by `renderResults()`'s substring match so short queries like "apple" match "Apple Inc."
 
-### UI flow (state lives in three module-level vars: `sf`, `sq`, `port`)
+### UI state (module-level vars in `main.ts`)
 
 - `sf` — selected firm (null = picker screen). Clicking the same firm again deselects.
-- `sq` — current search query, lowercased and trimmed. Matching: ticker `startsWith(sq)` OR name `includes(sq)`.
+- `sq` — current search query, lowercased and trimmed. Matching: ticker `startsWith(sq)` OR stripped-name `includes(sq)`.
 - `port` — array of uppercase tickers parsed from CSV upload or pasted text. `parse()` strips non-`[A-Za-z0-9.-]`, requires `/^[A-Z]/`, caps length at 12.
 
-`render()` renders at most 300 result rows and appends a "+N more — refine search" hint when truncated. `doChips()` re-renders portfolio chips as bad (`.bad`) when the ticker hits `t2f[base]` for the selected firm, otherwise ok (`.ok`).
+When matching a portfolio ticker against `t2f`, three forms are checked: the raw ticker, the hyphen-as-dot form (`BRK-B` → `BRK.B`), and the base symbol before `.` or `-`.
 
-### `data.json` and `vercel.json`
+### `vercel.json`
 
-`data.json` is a one-line placeholder (`SEE_BELOW`) — a relic from before the data was inlined into `index.html`. `vercel.json` only sets a `Cache-Control` header on `/data.json`. Neither is currently exercised by the app. Don't restore a fetch-from-`data.json` path without also moving the dataset out of `index.html`.
+Sets a 24h `Cache-Control` on `/data.json`. Vite handles the rest — Vercel auto-detects the project type and runs `npm run build`, serving from `dist/`.
 
 ## Editing conventions
 
-- Keep everything in `index.html`. Don't introduce a build step, bundler, or external dependencies — being a single file is the point.
-- Preserve the terse style: short class/var names, single-letter helpers, no comments unless something is genuinely surprising.
-- When adding rows to `D`, keep the `[firm, name, ticker, date]` shape and the `M/D/YYYY` date format.
-- If you change the firm set, update both the `.fb[data-f=…]` color rules in CSS and the `<button class="fb" data-f="…">` markup in the picker.
+- **Edit the smallest module that fits.** A bug in `parse()` is one file; a chip rendering tweak is one file.
+- **No new frameworks or dependencies.** Vite + TypeScript + Vitest is the entire toolchain. Don't add React, Tailwind, lodash, etc. — the codebase is small enough that vanilla works.
+- **Tests must stay green.** `npm test` runs in CI. New behavior in `parse()` or `data.ts` should land with a Vitest case.
+- **Preserve the terse style.** Short identifiers (`sf`, `sq`, `byF`, `t2f`), no comments unless something is genuinely surprising. Types provide the readability that long names used to.
+- **Row shape is fixed.** Tuples in `data.json` are `[firm, name, ticker, date]`. Don't reshape unless you have a plan for re-indexing.
+- **Footer disclaimer is load-bearing.** "Always verify against your firm's internal restricted list." — that exact sentence in `src/index.html` must stay. Don't weaken or paraphrase it.
+- **If you change the firm set,** update `src/types.ts` (`Firm`, `FIRMS`), the `.fb[data-f=…]` color rules in `src/styles.css`, and the picker markup in `src/index.html` together.
