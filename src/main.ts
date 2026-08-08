@@ -109,6 +109,28 @@ async function init(): Promise<void> {
     pa.value = '';
   });
 
+  const dm = $('dm');
+  const btnAck = $('btn-ack');
+  const firstFb = document.querySelector<HTMLButtonElement>('.fb')!;
+
+  function dismissDisclaimer(): void {
+    localStorage.setItem('ack', '1');
+    closeModal(dm);
+  }
+
+  btnAck.addEventListener('click', dismissDisclaimer);
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && dm.classList.contains('open')) {
+      e.preventDefault();
+      e.stopPropagation();
+      dismissDisclaimer();
+    }
+  }, true);
+
+  if (localStorage.getItem('ack') !== '1') {
+    openModal(dm, null, { initialFocus: btnAck, restoreFocus: firstFb });
+  }
+
   function setPort(tks: string[]): void {
     port = [...new Set(
       tks.map(t => t.toUpperCase().trim())
