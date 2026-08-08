@@ -149,3 +149,7 @@ init().catch((err) => {
     e.style.display = 'block';
   }
 });
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
