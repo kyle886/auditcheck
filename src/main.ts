@@ -75,7 +75,9 @@ async function init(): Promise<void> {
   });
 
   $('btn-import').addEventListener('click', () => $('fi').click());
-  $('btn-paste').addEventListener('click', () => openModal($('mo'), $<HTMLTextAreaElement>('pa')));
+  $('btn-paste').addEventListener('click', () =>
+    openModal($('mo'), $<HTMLTextAreaElement>('pa'), { restoreFocus: $('btn-paste') }),
+  );
 
   $<HTMLInputElement>('fi').addEventListener('change', (e) => {
     const target = e.target as HTMLInputElement;
