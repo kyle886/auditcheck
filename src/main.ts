@@ -75,7 +75,9 @@ async function init(): Promise<void> {
   });
 
   $('btn-import').addEventListener('click', () => $('fi').click());
-  $('btn-paste').addEventListener('click', () => openModal($('mo'), $<HTMLTextAreaElement>('pa')));
+  $('btn-paste').addEventListener('click', () =>
+    openModal($('mo'), $<HTMLTextAreaElement>('pa'), { restoreFocus: $('btn-paste') }),
+  );
 
   $<HTMLInputElement>('fi').addEventListener('change', (e) => {
     const target = e.target as HTMLInputElement;
@@ -107,6 +109,25 @@ async function init(): Promise<void> {
     pa.value = '';
   });
 
+  const dm = $('dm');
+  const btnAck = $('btn-ack');
+  const firstFb = document.querySelector<HTMLButtonElement>('.fb');
+
+  function dismissDisclaimer(): void {
+    localStorage.setItem('ack', '1');
+    closeModal(dm);
+  }
+
+  btnAck.addEventListener('click', dismissDisclaimer);
+
+  if (localStorage.getItem('ack') !== '1') {
+    openModal(dm, null, {
+      initialFocus: btnAck,
+      restoreFocus: firstFb ?? undefined,
+      onEscape: dismissDisclaimer,
+    });
+  }
+
   function setPort(tks: string[]): void {
     port = [...new Set(
       tks.map(t => t.toUpperCase().trim())
@@ -125,3 +146,7 @@ init().catch((err) => {
     e.style.display = 'block';
   }
 });
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}

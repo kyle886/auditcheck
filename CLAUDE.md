@@ -77,6 +77,16 @@ Row dedup key: `(firm, name, ticker)`. First-occurrence order is preserved. Each
 
 Each row also gets `r[4]` set to a lowercased, suffix-stripped name (Inc, Corp, LLC, etc.) at index time, used by `renderResults()`'s substring match so short queries like "apple" match "Apple Inc."
 
+### Refreshing the dataset
+
+1. **Source rows:** Download Form AP audit-client rows for the Big Four from [PCAOB AuditorSearch](https://pcaobus.org/resources/tools/auditorsearch). Filter to PwC, Deloitte, EY, and KPMG; map each row to `[firm, issuer_name, ticker, date]` with `ticker` left `""` (AuditorSearch bulk export has no ticker column).
+2. **Replace `public/data.json`:** Overwrite the file with the new array. Keep the tuple shape and minified JSON style.
+3. **Backfill tickers:** Run `npm run backfill:tickers` (or `node tools/backfill-tickers.mjs --dry-run` first). The script fetches SEC `company_tickers.json` (30s timeout), matches empty tickers by normalized issuer name, and writes the file. It **never overwrites** a non-empty ticker. If a normalized name maps to more than one SEC ticker, that name is treated as ambiguous and left empty. SEC sometimes 403s User-Agents that contain `github.com`; the script retries with a shortened UA automatically.
+
+4. **Footer years:** Do not edit year ranges by hand — `buildIndex()` derives `yearMin` / `yearMax` from filing dates at load.
+5. **Verify:** `npm test` and spot-check the app. Re-deploy so Vercel serves the updated `/data.json`.
+6. **Reminder:** Even after refresh, this remains a public PCAOB proxy, not any firm's internal restricted list.
+
 ### UI state (module-level vars in `main.ts`)
 
 - `sf` — selected firm (null = picker screen). Clicking the same firm again deselects.

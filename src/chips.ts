@@ -1,5 +1,12 @@
 import type { Firm, Ticker2Firms } from './types';
 
+export function tickerRestricted(t: string, firm: Firm | null, t2f: Ticker2Firms): boolean {
+  if (!firm) return false;
+  const base = t.split(/[.\-]/)[0];
+  const alt = t.replace(/-/g, '.');
+  return !!(t2f[t]?.has(firm) || t2f[alt]?.has(firm) || t2f[base]?.has(firm));
+}
+
 export interface ChipsOpts {
   port: string[];
   firm: Firm | null;
@@ -16,13 +23,7 @@ export function doChips({ port, firm, t2f, chipsEl, sumEl }: ChipsOpts): void {
   }
   let bads = 0;
   chipsEl.innerHTML = port.map(t => {
-    const base = t.split(/[.\-]/)[0];
-    const alt = t.replace(/-/g, '.');
-    const bad = !!(firm && (
-      (t2f[t] || new Set()).has(firm) ||
-      (t2f[alt] || new Set()).has(firm) ||
-      (t2f[base] || new Set()).has(firm)
-    ));
+    const bad = tickerRestricted(t, firm, t2f);
     if (bad) bads++;
     return '<span class="chip ' + (bad ? 'bad' : 'ok') + '">' +
       (bad ? '&#x26A0;' : '&#x2713;') + '&nbsp;' + t +

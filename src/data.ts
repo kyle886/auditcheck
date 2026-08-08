@@ -1,10 +1,12 @@
 import type { ByFirm, Firm, Row, Ticker2Firms } from './types';
 
+// Keep in sync with tools/lib/normalize-name.mjs (used by backfill ops script).
 const SUFFIXES = new Set([
   'inc', 'inc.', 'corp', 'corp.', 'corporation', 'co', 'co.', 'company',
   'ltd', 'ltd.', 'limited', 'llc', 'l.l.c.', 'plc', 'n.v.', 's.a.', 'ag',
   'holdings', 'group',
 ]);
+
 
 export function stripSuffixes(s: string): string {
   const w = s.trim().split(/\s+/);
