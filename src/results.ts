@@ -24,14 +24,42 @@ export function renderResults({ byF, firm, query, lcEl, rcEl }: RenderOpts): voi
       '<div style="text-align:center;padding:50px 20px;color:#666"><div style="font-size:32px;margin-bottom:10px">&#x1F50D;</div><p>No matches</p></div>';
     return;
   }
-  const rows = fil.slice(0, 300).map((r: Row) => {
+  const list = document.createElement('div');
+  list.className = 'list';
+  for (const r of fil.slice(0, 300)) {
     const n = r[1], t = r[2];
-    const tkEl = t ? '<span class="tk">' + t + '</span>' : '<span class="tk nt">&mdash;</span>';
-    const yr = r.yMin ? (r.yMin === r.yMax ? '' + r.yMin : r.yMin + '–' + r.yMax) : '';
-    return '<div class="it">' + tkEl + '<span class="nm" title="' + n + '">' + n + '</span><span class="dt">' + yr + '</span></div>';
-  }).join('');
-  const more = fil.length > 300
-    ? '<p style="text-align:center;color:#3a3a3a;font-size:12px;margin-top:10px">+' + (fil.length - 300) + ' more — refine search</p>'
-    : '';
-  lcEl.innerHTML = '<div class="list">' + rows + '</div>' + more;
+    const row = document.createElement('div');
+    row.className = 'it';
+    const tkSpan = document.createElement('span');
+    if (t) {
+      tkSpan.className = 'tk';
+      tkSpan.textContent = t;
+    } else {
+      tkSpan.className = 'tk nt';
+      tkSpan.textContent = '\u2014';
+    }
+    row.appendChild(tkSpan);
+    const nmSpan = document.createElement('span');
+    nmSpan.className = 'nm';
+    nmSpan.title = n;
+    nmSpan.textContent = n;
+    row.appendChild(nmSpan);
+    const dtSpan = document.createElement('span');
+    dtSpan.className = 'dt';
+    if (r.yMin) {
+      dtSpan.textContent = r.yMin === r.yMax ? '' + r.yMin : r.yMin + '–' + r.yMax;
+    }
+    row.appendChild(dtSpan);
+    list.appendChild(row);
+  }
+  lcEl.replaceChildren(list);
+  if (fil.length > 300) {
+    const more = document.createElement('p');
+    more.style.textAlign = 'center';
+    more.style.color = '#3a3a3a';
+    more.style.fontSize = '12px';
+    more.style.marginTop = '10px';
+    more.textContent = '+' + (fil.length - 300) + ' more — refine search';
+    lcEl.appendChild(more);
+  }
 }
