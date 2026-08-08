@@ -3,20 +3,43 @@ const FOCUSABLE =
 
 let trapModal: HTMLElement | null = null;
 let restoreFocusEl: HTMLElement | null = null;
+let onEscapeCb: (() => void) | null = null;
 let onKeyDown: ((e: KeyboardEvent) => void) | null = null;
 
+function isShown(el: HTMLElement): boolean {
+  if (el.hasAttribute('disabled')) return false;
+  if (typeof el.checkVisibility === 'function') {
+    return el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+  }
+  const s = getComputedStyle(el);
+  return s.display !== 'none' && s.visibility !== 'hidden' && el.offsetParent !== null;
+}
+
 function focusables(modal: HTMLElement): HTMLElement[] {
-  return [...modal.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-    el => !el.hasAttribute('disabled') && el.offsetParent !== null,
-  );
+  return [...modal.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(isShown);
+}
+
+function detachTrap(): void {
+  if (onKeyDown) {
+    document.removeEventListener('keydown', onKeyDown);
+    onKeyDown = null;
+  }
+  trapModal = null;
+  onEscapeCb = null;
 }
 
 export function openModal(
   modal: HTMLElement,
   textarea: HTMLTextAreaElement | null,
-  opts?: { restoreFocus?: HTMLElement; initialFocus?: HTMLElement },
+  opts?: {
+    restoreFocus?: HTMLElement;
+    initialFocus?: HTMLElement;
+    onEscape?: () => void;
+  },
 ): void {
+  detachTrap();
   restoreFocusEl = opts?.restoreFocus ?? null;
+  onEscapeCb = opts?.onEscape ?? null;
   modal.classList.add('open');
 
   const focus = opts?.initialFocus ?? textarea;
@@ -25,7 +48,8 @@ export function openModal(
   onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       e.preventDefault();
-      closeModal(modal);
+      if (onEscapeCb) onEscapeCb();
+      else closeModal(modal);
       return;
     }
     if (e.key !== 'Tab' || trapModal !== modal) return;
@@ -55,13 +79,7 @@ export function openModal(
 export function closeModal(modal: HTMLElement): void {
   modal.classList.remove('open');
 
-  if (trapModal === modal) {
-    trapModal = null;
-    if (onKeyDown) {
-      document.removeEventListener('keydown', onKeyDown);
-      onKeyDown = null;
-    }
-  }
+  if (trapModal === modal) detachTrap();
 
   const el = restoreFocusEl;
   restoreFocusEl = null;

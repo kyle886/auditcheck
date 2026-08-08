@@ -4,11 +4,7 @@ export function tickerRestricted(t: string, firm: Firm | null, t2f: Ticker2Firms
   if (!firm) return false;
   const base = t.split(/[.\-]/)[0];
   const alt = t.replace(/-/g, '.');
-  return (
-    (t2f[t] || new Set()).has(firm) ||
-    (t2f[alt] || new Set()).has(firm) ||
-    (t2f[base] || new Set()).has(firm)
-  );
+  return !!(t2f[t]?.has(firm) || t2f[alt]?.has(firm) || t2f[base]?.has(firm));
 }
 
 export interface ChipsOpts {

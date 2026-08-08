@@ -111,7 +111,7 @@ async function init(): Promise<void> {
 
   const dm = $('dm');
   const btnAck = $('btn-ack');
-  const firstFb = document.querySelector<HTMLButtonElement>('.fb')!;
+  const firstFb = document.querySelector<HTMLButtonElement>('.fb');
 
   function dismissDisclaimer(): void {
     localStorage.setItem('ack', '1');
@@ -119,16 +119,13 @@ async function init(): Promise<void> {
   }
 
   btnAck.addEventListener('click', dismissDisclaimer);
-  document.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && dm.classList.contains('open')) {
-      e.preventDefault();
-      e.stopPropagation();
-      dismissDisclaimer();
-    }
-  }, true);
 
   if (localStorage.getItem('ack') !== '1') {
-    openModal(dm, null, { initialFocus: btnAck, restoreFocus: firstFb });
+    openModal(dm, null, {
+      initialFocus: btnAck,
+      restoreFocus: firstFb ?? undefined,
+      onEscape: dismissDisclaimer,
+    });
   }
 
   function setPort(tks: string[]): void {
