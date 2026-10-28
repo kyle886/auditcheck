@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { normalizeName } from './lib/normalize-name.mjs';
+import { backfillRows, buildTickerMap } from './lib/backfill.mjs';
 
 const SEC_URL = 'https://www.sec.gov/files/company_tickers.json';
 const FETCH_MS = 30_000;
@@ -47,48 +47,18 @@ if (!res.ok) {
   process.exit(1);
 }
 
-const sec = await res.json();
+let index;
+try {
+  index = buildTickerMap(await res.json());
+} catch (err) {
+  console.error('error: unexpected SEC response: ' + String(err?.message || err));
+  process.exit(1);
+}
 const rows = JSON.parse(readFileSync(dataPath, 'utf8'));
-
-const map = new Map();
-const ambiguous = new Set();
-for (const entry of Object.values(sec)) {
-  const key = normalizeName(entry.title);
-  const ticker = String(entry.ticker).toUpperCase();
-  if (ambiguous.has(key)) continue;
-  if (!map.has(key)) {
-    map.set(key, ticker);
-  } else if (map.get(key) !== ticker) {
-    map.delete(key);
-    ambiguous.add(key);
-  }
-}
-
-let filled = 0;
-let skippedAmbiguous = 0;
-let stillEmpty = 0;
-
-for (const row of rows) {
-  if (row[2] !== '') continue;
-  const key = normalizeName(row[1]);
-  if (ambiguous.has(key)) {
-    skippedAmbiguous++;
-    stillEmpty++;
-    continue;
-  }
-  const ticker = map.get(key);
-  if (ticker) {
-    row[2] = ticker;
-    filled++;
-  } else {
-    stillEmpty++;
-  }
-}
-
-const uniqueTickersAfter = new Set(rows.filter(r => r[2]).map(r => r[2].toUpperCase())).size;
+const stats = backfillRows(rows, index);
 
 if (!dry) {
   writeFileSync(dataPath, JSON.stringify(rows));
 }
 
-console.log(JSON.stringify({ filled, skippedAmbiguous, stillEmpty, uniqueTickersAfter }));
+console.log(JSON.stringify(stats));
