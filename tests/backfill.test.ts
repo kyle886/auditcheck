@@ -16,13 +16,17 @@ describe('assertSecShape', () => {
   });
 
   it.each([
-    ['null', null],
-    ['array', []],
-    ['empty object', {}],
-    ['html error page string', '<html>Request Rate Threshold Exceeded</html>'],
-    ['entry missing title', { '0': { ticker: 'X' } }],
-  ])('rejects %s', (_, payload) => {
-    expect(() => assertSecShape(payload)).toThrow();
+    ['null', null, 'SEC payload is not an object'],
+    ['array', [], 'SEC payload is not an object'],
+    ['empty object', {}, 'SEC payload is empty'],
+    ['html error page string', '<html>Request Rate Threshold Exceeded</html>', 'SEC payload is not an object'],
+    ['ticker missing', { '0': { title: 'Acme Inc' } }, 'SEC payload entry missing ticker/title'],
+    ['ticker numeric', { '0': { ticker: 123, title: 'Acme Inc' } }, 'SEC payload entry missing ticker/title'],
+    ['ticker null', { '0': { ticker: null, title: 'Acme Inc' } }, 'SEC payload entry missing ticker/title'],
+    ['title missing', { '0': { ticker: 'X' } }, 'SEC payload entry missing ticker/title'],
+    ['title non-string', { '0': { ticker: 'X', title: 42 } }, 'SEC payload entry missing ticker/title'],
+  ])('rejects %s with a clear message', (_, payload, message) => {
+    expect(() => assertSecShape(payload)).toThrow(message);
   });
 });
 

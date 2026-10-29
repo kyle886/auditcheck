@@ -1,6 +1,11 @@
 import { normalizeName } from './normalize-name.mjs';
 
 // SEC company_tickers.json: { "0": { cik_str, ticker, title }, ... }
+//
+// Intentional deltas vs legacy inline CLI logic: non-string tickers abort here
+// (old code used String(entry.ticker)); an empty object aborts before data.json
+// is read or written (old code no-op'd with zero fills). Fail-closed on bad SEC
+// shape. UNKNOWN whether live SEC data ever emits non-string tickers.
 export function assertSecShape(sec) {
   if (!sec || typeof sec !== 'object' || Array.isArray(sec)) {
     throw new Error('SEC payload is not an object');
