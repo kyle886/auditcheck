@@ -11,7 +11,7 @@ export default defineConfig({
   },
   test: {
     root: '.',
-    include: ['tests/**/*.test.ts'],
+    include: ['tests/**/*.test.ts', 'tests/**/*.test.mjs'],
     environment: 'node',
   },
 });

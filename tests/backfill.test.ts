@@ -1,0 +1,91 @@
+import { describe, expect, it } from 'vitest';
+import { assertSecShape, backfillRows, buildTickerMap } from '../tools/lib/backfill.mjs';
+
+const sec = {
+  '0': { cik_str: 320193, ticker: 'aapl', title: 'Apple Inc.' },
+  '1': { cik_str: 789019, ticker: 'MSFT', title: 'MICROSOFT CORP' },
+  '2': { cik_str: 1, ticker: 'FOOA', title: 'Foo Holdings' },
+  '3': { cik_str: 2, ticker: 'FOOB', title: 'Foo Group' },
+  '4': { cik_str: 3, ticker: 'BAR', title: 'Bar Inc' },
+  '5': { cik_str: 3, ticker: 'BAR', title: 'Bar Corp' },
+};
+
+describe('assertSecShape', () => {
+  it('accepts the SEC company_tickers.json shape', () => {
+    expect(assertSecShape(sec)).toHaveLength(6);
+  });
+
+  it.each([
+    ['null', null, 'SEC payload is not an object'],
+    ['array', [], 'SEC payload is not an object'],
+    ['empty object', {}, 'SEC payload is empty'],
+    ['html error page string', '<html>Request Rate Threshold Exceeded</html>', 'SEC payload is not an object'],
+    ['undefined entry', { '0': undefined }, 'SEC payload entry missing ticker/title'],
+    ['null entry', { '0': null }, 'SEC payload entry missing ticker/title'],
+    ['ticker missing', { '0': { title: 'Acme Inc' } }, 'SEC payload entry missing ticker/title'],
+    ['ticker numeric', { '0': { ticker: 123, title: 'Acme Inc' } }, 'SEC payload entry missing ticker/title'],
+    ['ticker null', { '0': { ticker: null, title: 'Acme Inc' } }, 'SEC payload entry missing ticker/title'],
+    ['title missing', { '0': { ticker: 'X' } }, 'SEC payload entry missing ticker/title'],
+    ['title non-string', { '0': { ticker: 'X', title: 42 } }, 'SEC payload entry missing ticker/title'],
+  ])('rejects %s with a clear message', (_, payload, message) => {
+    expect(() => assertSecShape(payload)).toThrow(message);
+  });
+});
+
+describe('buildTickerMap', () => {
+  it('keys by normalized name and uppercases tickers', () => {
+    const { map } = buildTickerMap(sec);
+    expect(map.get('apple')).toBe('AAPL');
+    expect(map.get('microsoft')).toBe('MSFT');
+  });
+
+  it('marks names that normalize to different tickers as ambiguous', () => {
+    const { map, ambiguous } = buildTickerMap(sec);
+    expect(ambiguous.has('foo')).toBe(true);
+    expect(map.has('foo')).toBe(false);
+  });
+
+  it('does not treat repeated identical tickers as ambiguous', () => {
+    const { map, ambiguous } = buildTickerMap(sec);
+    expect(map.get('bar')).toBe('BAR');
+    expect(ambiguous.has('bar')).toBe(false);
+  });
+
+  it('keeps a name ambiguous even if a later entry repeats the first ticker', () => {
+    const { map, ambiguous } = buildTickerMap({
+      '0': { ticker: 'A', title: 'Dup Inc' },
+      '1': { ticker: 'B', title: 'Dup Corp' },
+      '2': { ticker: 'A', title: 'Dup' },
+    });
+    expect(ambiguous.has('dup')).toBe(true);
+    expect(map.has('dup')).toBe(false);
+  });
+});
+
+describe('backfillRows', () => {
+  it.each([null, {}, [null], [['PwC', null, '', '1/1/2024']],
+    [['PwC', 'Apple', null, '1/1/2024']], [['PwC', 'Apple', '  ', '1/1/2024']],
+    [['PwC', 'Apple', ' AAPL ', '1/1/2024']]].map(rows => ({ rows })))(
+    'rejects malformed rows before mutating data: %j', ({ rows }) => {
+      expect(() => backfillRows(rows, buildTickerMap(sec))).toThrow('Data rows must contain');
+    });
+
+  it('validates all rows before filling any ticker', () => {
+    const rows = [['PwC', 'Apple Inc', '', '1/1/2024'], ['EY', 'Bad', null, '1/1/2024']];
+    expect(() => backfillRows(rows, buildTickerMap(sec))).toThrow('Data rows must contain');
+    expect(rows[0][2]).toBe('');
+  });
+
+  it('fills empty tickers, skips ambiguous, never overwrites, and reports stats', () => {
+    const rows = [
+      ['PwC', 'Apple Inc', '', '1/1/2024'],
+      ['EY', 'Microsoft Corporation', '', '1/1/2024'],
+      ['KPMG', 'Foo Holdings', '', '1/1/2024'],
+      ['Deloitte', 'Unknown Fund Trust', '', '1/1/2024'],
+      ['PwC', 'Apple Inc', 'KEEP', '1/1/2024'],
+    ];
+    const stats = backfillRows(rows, buildTickerMap(sec));
+    expect(rows.map(r => r[2])).toEqual(['AAPL', 'MSFT', '', '', 'KEEP']);
+    expect(stats).toEqual({ filled: 2, skippedAmbiguous: 1, stillEmpty: 2, uniqueTickersAfter: 3 });
+  });
+});
