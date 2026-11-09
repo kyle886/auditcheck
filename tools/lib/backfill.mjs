@@ -38,8 +38,8 @@ export function buildTickerMap(sec) {
 export function backfillRows(rows, { map, ambiguous }) {
   if (!Array.isArray(rows) || rows.some(row => !Array.isArray(row) ||
     typeof row[1] !== 'string' || typeof row[2] !== 'string' ||
-    (row[2] !== '' && row[2].trim() === ''))) {
-    throw new Error('Data rows must contain string names and tickers (empty ticker must be an empty string)');
+    row[2] !== row[2].trim())) {
+    throw new Error('Data rows must contain string names and tickers without surrounding whitespace');
   }
   let filled = 0;
   let skippedAmbiguous = 0;

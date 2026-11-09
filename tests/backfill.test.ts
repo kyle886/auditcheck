@@ -64,7 +64,8 @@ describe('buildTickerMap', () => {
 
 describe('backfillRows', () => {
   it.each([null, {}, [null], [['PwC', null, '', '1/1/2024']],
-    [['PwC', 'Apple', null, '1/1/2024']], [['PwC', 'Apple', '  ', '1/1/2024']]].map(rows => ({ rows })))(
+    [['PwC', 'Apple', null, '1/1/2024']], [['PwC', 'Apple', '  ', '1/1/2024']],
+    [['PwC', 'Apple', ' AAPL ', '1/1/2024']]].map(rows => ({ rows })))(
     'rejects malformed rows before mutating data: %j', ({ rows }) => {
       expect(() => backfillRows(rows, buildTickerMap(sec))).toThrow('Data rows must contain');
     });
