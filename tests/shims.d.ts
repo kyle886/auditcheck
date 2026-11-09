@@ -8,7 +8,7 @@ declare module '*backfill.mjs' {
   export function assertSecShape(sec: unknown): SecEntry[];
   export function buildTickerMap(sec: unknown): TickerIndex;
   export function backfillRows(
-    rows: string[][],
+    rows: unknown,
     index: TickerIndex,
   ): { filled: number; skippedAmbiguous: number; stillEmpty: number; uniqueTickersAfter: number };
 }

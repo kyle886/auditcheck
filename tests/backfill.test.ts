@@ -20,6 +20,8 @@ describe('assertSecShape', () => {
     ['array', [], 'SEC payload is not an object'],
     ['empty object', {}, 'SEC payload is empty'],
     ['html error page string', '<html>Request Rate Threshold Exceeded</html>', 'SEC payload is not an object'],
+    ['undefined entry', { '0': undefined }, 'SEC payload entry missing ticker/title'],
+    ['null entry', { '0': null }, 'SEC payload entry missing ticker/title'],
     ['ticker missing', { '0': { title: 'Acme Inc' } }, 'SEC payload entry missing ticker/title'],
     ['ticker numeric', { '0': { ticker: 123, title: 'Acme Inc' } }, 'SEC payload entry missing ticker/title'],
     ['ticker null', { '0': { ticker: null, title: 'Acme Inc' } }, 'SEC payload entry missing ticker/title'],
@@ -61,6 +63,18 @@ describe('buildTickerMap', () => {
 });
 
 describe('backfillRows', () => {
+  it.each([null, {}, [null], [['PwC', null, '', '1/1/2024']],
+    [['PwC', 'Apple', null, '1/1/2024']], [['PwC', 'Apple', '  ', '1/1/2024']]].map(rows => ({ rows })))(
+    'rejects malformed rows before mutating data: %j', ({ rows }) => {
+      expect(() => backfillRows(rows, buildTickerMap(sec))).toThrow('Data rows must contain');
+    });
+
+  it('validates all rows before filling any ticker', () => {
+    const rows = [['PwC', 'Apple Inc', '', '1/1/2024'], ['EY', 'Bad', null, '1/1/2024']];
+    expect(() => backfillRows(rows, buildTickerMap(sec))).toThrow('Data rows must contain');
+    expect(rows[0][2]).toBe('');
+  });
+
   it('fills empty tickers, skips ambiguous, never overwrites, and reports stats', () => {
     const rows = [
       ['PwC', 'Apple Inc', '', '1/1/2024'],

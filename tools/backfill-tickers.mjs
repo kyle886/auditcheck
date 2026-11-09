@@ -54,8 +54,14 @@ try {
   console.error('error: unexpected SEC response: ' + String(err?.message || err));
   process.exit(1);
 }
-const rows = JSON.parse(readFileSync(dataPath, 'utf8'));
-const stats = backfillRows(rows, index);
+let rows, stats;
+try {
+  rows = JSON.parse(readFileSync(dataPath, 'utf8'));
+  stats = backfillRows(rows, index);
+} catch (err) {
+  console.error('error: invalid local data: ' + String(err?.message || err));
+  process.exit(1);
+}
 
 if (!dry) {
   writeFileSync(dataPath, JSON.stringify(rows));

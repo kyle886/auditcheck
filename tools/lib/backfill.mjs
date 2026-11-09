@@ -12,8 +12,8 @@ export function assertSecShape(sec) {
   }
   const entries = Object.values(sec);
   if (entries.length === 0) throw new Error('SEC payload is empty');
-  const bad = entries.find(e => !e || typeof e.ticker !== 'string' || typeof e.title !== 'string');
-  if (bad !== undefined) throw new Error('SEC payload entry missing ticker/title');
+  const bad = entries.some(e => !e || typeof e.ticker !== 'string' || typeof e.title !== 'string');
+  if (bad) throw new Error('SEC payload entry missing ticker/title');
   return entries;
 }
 
@@ -36,6 +36,11 @@ export function buildTickerMap(sec) {
 
 // Mutates rows in place; never overwrites a non-empty ticker.
 export function backfillRows(rows, { map, ambiguous }) {
+  if (!Array.isArray(rows) || rows.some(row => !Array.isArray(row) ||
+    typeof row[1] !== 'string' || typeof row[2] !== 'string' ||
+    (row[2] !== '' && row[2].trim() === ''))) {
+    throw new Error('Data rows must contain string names and tickers (empty ticker must be an empty string)');
+  }
   let filled = 0;
   let skippedAmbiguous = 0;
   let stillEmpty = 0;
